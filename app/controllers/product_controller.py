@@ -31,14 +31,23 @@ class ProductController:
         }), 201
 
     def get_product_information_controller(self):
-        data = request.get_json(silent=True)
+        product_id = request.args.get("product_id")
 
-        if not data or "product_id" not in data:
+        if not product_id:
             return {"error": "product_id is required"}, 400
 
-        product_id = data["product_id"]
         product_code = self.product_service.get_product_code(product_id)
         url = "https://www.lazada.co.th/products/"+product_code+".html"
+        # product_detail = self.product_service.get_product_info(url)
+        # isSuccess = self.product_service.post_product_detail(product_detail[0])
+        # if not isSuccess:
+        #     return {"error": "can not post product info"}, 400
+        
+        return jsonify({
+            "product_id": product_id,
+            "product_code": product_code
+        }), 201
+        
     
 
     

@@ -4,12 +4,12 @@ from app.services.scraper.apify_service import ApifyService
 
 class ProductService:
 
-    def format_product_code(url):
+    def format_product_code(self, url):
         product_code_format = r'pdp-i\d*-s\d*'
         product_code =  re.search(product_code_format, url)
         return product_code
 
-    def get_product_id(product_code):
+    def get_product_id(self, product_code):
         conn = get_conn()
         try:
             with conn.cursor() as cur:
@@ -22,20 +22,20 @@ class ProductService:
         finally:
             release_conn(conn)
 
-    def get_product_code(product_id):
+    def get_product_code(self, product_id):
         conn = get_conn()
         try:
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT Get_ProductCode(%s);",
-                    (product_id,)
+                    (int(product_id),)
                 )
                 row = cur.fetchone()
                 return row[0]
         finally:
             release_conn(conn)
 
-    def post_product_code(product_code):
+    def post_product_code(self, product_code):
         conn = get_conn()
         try:
             with conn.cursor() as cur:
@@ -53,20 +53,21 @@ class ProductService:
         finally:
             release_conn(conn)
     
-    def get_product_info(url):
+    def get_product_info(self, url):
         apify_service = ApifyService(url)
         product_detail = apify_service.get_product_detail()
-        product_reviews = apify_service.get_product_reviews()
-        return product_detail, product_reviews
+        return product_detail
     
-    def post_product_detail(product_detail):
+    def post_product_detail(self, product_detail):
         conn = get_conn()
         try:
             with conn.cursor() as cur:
                 try:
                     cur.execute(
-                        "CALL Post_ProductCode(%s);",
-                        (product_detail,)
+                        "CALL Post_ProductInfo(%s, %s, %s);",
+                        (product_detail["name"], 
+                         product_detail["seller"]["name"],
+                         product_detail["sku"]["0"]["price"]["sale_price"]["value"])
                     )
                     conn.commit()
                     return True

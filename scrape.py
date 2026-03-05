@@ -2,7 +2,7 @@ from apify_client import ApifyClient
 
 # Initialize the ApifyClient with your Apify API token
 # Replace '<YOUR_API_TOKEN>' with your token.
-client = ApifyClient("api-key")
+client = ApifyClient("")
 
 # Prepare the Actor input
 run_input = {
@@ -25,5 +25,7 @@ run = client.actor("ecomscrape/lazada-product-scraper").call(run_input=run_input
 print("💾 Check your data here: https://console.apify.com/storage/datasets/" + run["defaultDatasetId"])
 for item in client.dataset(run["defaultDatasetId"]).iterate_items():
     print(item)
+    print('-----')
+    print(type(item))
 
 # 📚 Want to learn more 📖? Go to → https://docs.apify.com/api/client/python/docs/quick-start
