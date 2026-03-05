@@ -4,12 +4,12 @@ from app.services.scraper.apify_service import ApifyService
 
 class ProductService:
 
-    def format_product_code(url):
+    def format_product_code(self, url):
         product_code_format = r'pdp-i\d*-s\d*'
         product_code =  re.search(product_code_format, url)
         return product_code
 
-    def get_product_id(product_code):
+    def get_product_id(self, product_code):
         conn = get_conn()
         try:
             with conn.cursor() as cur:
@@ -22,7 +22,7 @@ class ProductService:
         finally:
             release_conn(conn)
 
-    def get_product_code(product_id):
+    def get_product_code(self, product_id):
         conn = get_conn()
         try:
             with conn.cursor() as cur:

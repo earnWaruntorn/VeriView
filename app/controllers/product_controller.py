@@ -41,12 +41,10 @@ class ProductController:
                 return {"error": "Product not found"}, 404
 
             product_code = product_info.get("product_code")
-
             if not product_code:
                 return {"error": "Product code missing"}, 500
 
             if not product_info.get("last_scraped"):
-
                 url = f"https://www.lazada.co.th/products/{product_code}.html"
 
                 scraped_product = self.product_service.scrape_product_info(url)
