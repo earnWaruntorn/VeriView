@@ -25,8 +25,9 @@ class ApifyService:
         product_info = []
         print("💾 Check your data here: https://console.apify.com/storage/datasets/" + run["defaultDatasetId"])
         for item in self.client.dataset(run["defaultDatasetId"]).iterate_items():
-            item_json = eval(item)
-            product_info.append(item_json)
+            # item_json = eval(item)
+            product_info.append(item)
+        return product_info[0]
     
     def get_product_reviews(self):
         run_input = {
@@ -42,5 +43,5 @@ class ApifyService:
         print("💾 Check your data here: https://console.apify.com/storage/datasets/" + run["defaultDatasetId"])
         for item in self.client.dataset(run["defaultDatasetId"]).iterate_items():
             print(item)
-            item_json = eval(item)
-            product_reviews.append(item_json)
+            # item_json = eval(item)
+            product_reviews.append(item)
