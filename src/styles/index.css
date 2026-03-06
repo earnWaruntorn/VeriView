@@ -1,0 +1,169 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background-color: #eaf4ff;
+}
+
+/* Navbar */
+.navbar {
+  background: #fff;
+  height: 80px;
+  padding: 0 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+}
+
+/* Core Section */
+.core {
+  min-height: calc(100vh - 80px); /* 80px = navbar height */
+  max-width: 1920px;
+  margin: 0 auto;
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  transform: translateY(-80px);
+}
+
+.core h1 {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.core p {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 32px;
+}
+
+/* Search Box */
+.search-box {
+  display: flex;
+  width: 520px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-box input {
+  flex: 1;
+  padding: 14px 16px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+}
+
+.search-box button {
+  background: #5D96E5;
+  color: white;
+  border: none;
+  padding: 0 24px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.search-box button:hover {
+  background: #4b82d1;
+}
+
+/* HOW IT WORKS */
+.how-it-works {
+  background: #eaf4ff;
+  min-height: 80vh;
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 100px 80px;
+  text-align: center;
+
+  transform: translateY(-40px);
+}
+
+.how-it-works h2 {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 80px;
+}
+
+.steps {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.step {
+  flex: 1;
+}
+
+.circle {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #5D96E5;
+  color: white;
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.step h3 {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.step p {
+  color: #888;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+/* OUR SYSTEM */
+.our-system {
+  background: #eaf4ff;
+  min-height: 80vh;
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 100px 80px;
+  text-align: center;
+
+  transform: translateY(-40px);
+}
+
+.our-system h2 {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 40px;
+}
+
+.our-system p {
+  font-size: 24px;
+  color: #8a8a8a;
+  line-height: 1.8;
+  max-width: 1100px;
+  margin: 0 auto;
+}
