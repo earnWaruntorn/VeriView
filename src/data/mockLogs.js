@@ -1,4 +1,46 @@
-/* Mock log data */
+const reviewPoolReal = [
+    { text: "ได้รับสินค้าแล้ว ส่งเร็วมาก ตรงปก คุณภาพดีเกินราคา ใช้ดี ชอบมาก", sentiment: "positive" },
+    { text: "สินค้าส่งไว พนักงานโทรเช็คล่วงหน้า แพ็คสินค้าดีห่อบับเบิ้ล ของแท้ตรงปก", sentiment: "positive" },
+    { text: "วัสดุคุณภาพสูง สีสันดี ไม่รั่ว ง่ายต่อการทำความสะอาด ขนาดกะทัดรัด", sentiment: "neutral" },
+    { text: "การออกแบบสวยงามและมินิมอล วัสดุทนทาน คุณภาพดี", sentiment: "positive" },
+    { text: "ส่งเร็วมากๆ สินค้าดีไม่เสียหาย ราคาไม่แพง คุ้มค่ามากครับ", sentiment: "positive" },
+    { text: "พนักงานโทรถามก่อนของจะถึง ใช้งานไม่ยาก ดีไซน์สวย ราคาไม่สูงมาก", sentiment: "neutral" },
+    { text: "แก้วสวย ใช้ง่าย ล้างง่าย เก็บความเย็นดี ได้ช่วงลดราคามา", sentiment: "positive" },
+    { text: "ชอบมากขนาดกะทัดรัด ปากกว้างล้างง่าย การเก็บอุณหภูมิดี", sentiment: "neutral" },
+    { text: "ของแท้ คุณภาพดีมาก ส่งเร็ว แพคอย่างดี ชอบมากค่ะ", sentiment: "positive" },
+    { text: "ดีมากครับ สินค้าคุณภาพ ราคาดี จะกลับมาซื้ออีก", sentiment: "positive" },
+    { text: "สวยมากค่ะ ใช้แล้วชอบ เก็บความเย็นได้ดี ถือไปทำงานทุกวัน", sentiment: "positive" },
+    { text: "ตรงปกมาก คุณภาพเยี่ยม ราคาคุ้มค่า บรรจุภัณฑ์ดี", sentiment: "positive" },
+    { text: "สินค้าดีครับ แพ็คแน่นมาก ส่งไวมาก ตรงตามที่สั่ง", sentiment: "positive" },
+    { text: "ใช้ดีมากค่ะ เก็บอุณหภูมิได้นาน ดีไซน์เรียบหรู", sentiment: "positive" },
+    { text: "ส่งมาเร็วมาก ของแท้ชัวร์ คุณภาพดีเกินราคา แนะนำเลย", sentiment: "positive" },
+    { text: "สินค้ามีรอยขีดข่วนเล็กน้อย แต่ใช้งานได้ปกติ", sentiment: "negative" },
+    { text: "ไม่ค่อยประทับใจเท่าไหร่ สินค้าธรรมดา ราคาแพงไปหน่อย", sentiment: "negative" },
+    { text: "ขนาดเล็กกว่าที่คิดไว้ แต่คุณภาพโอเค", sentiment: "neutral" },
+];
+
+const reviewPoolFake = [
+    { text: "ดีมากๆๆๆๆๆ สุดยอดเลย ซื้อเลยๆๆๆ ไม่ผิดหวัง 555", sentiment: "positive" },
+    { text: "Good good good good good ดีมากๆ ชอบมาก 555", sentiment: "positive" },
+    { text: "ร้านนี้ดีมากกกกกกก ส่งไว สินค้าเยี่ยม เลิศ", sentiment: "positive" },
+    { text: "ให้ 5 ดาวเลยจ้าาา ดีมากกก เกินคาด ชอบบบบ", sentiment: "positive" },
+    { text: "a a a a a a ดีค่ะ ชอบค่ะ สวยค่ะ เยี่ยมค่ะ", sentiment: "neutral" },
+    { text: "สั่งซื้อตามรีวิว ก็งั้นๆ ไม่ได้ดีอะไรมาก แต่ก็ให้ 5 ดาว", sentiment: "neutral" },
+    { text: "ซื้อมาแล้ว 100 ชิ้น ชอบมากๆ ทุกชิ้นดีหมด แนะนำทุกคน", sentiment: "positive" },
+    { text: "แย่มากครับ ส่งช้า สินค้าไม่ตรงปก", sentiment: "negative" },
+    { text: "หลอกลวง อย่าซื้อเด็ดขาด", sentiment: "negative" },
+    { text: "5 5 5 5 5 ให้ 5 ดาว ดีมากครับ", sentiment: "neutral" },
+    { text: "สุดยอดดดดด ดีเกินบรรยาย ซื้อเลยยย", sentiment: "positive" },
+    { text: "ของมาไม่ครบ ติดต่อยากมาก", sentiment: "negative" },
+];
+
+// Slice helper – gives each log a different subset of reviews
+const slice = (arr, start, count) => {
+    const result = [];
+    for (let i = 0; i < count; i++) result.push(arr[(start + i) % arr.length]);
+    return result;
+};
+
 const MOCK_LOGS = [
     {
         id: 1,
@@ -9,6 +51,9 @@ const MOCK_LOGS = [
         scrapeStatus: "scraped",
         analyzeTime: "2025-11-14 11:04",
         analyzeStatus: "analyzed",
+        realReviewPercent: 38,
+        realReviews: slice(reviewPoolReal, 0, 8),
+        fakeReviews: slice(reviewPoolFake, 0, 12),
     },
     {
         id: 2,
@@ -19,6 +64,9 @@ const MOCK_LOGS = [
         scrapeStatus: "scraped",
         analyzeTime: "2025-11-14 11:18",
         analyzeStatus: "analyzed",
+        realReviewPercent: 15,
+        realReviews: slice(reviewPoolReal, 3, 3),
+        fakeReviews: slice(reviewPoolFake, 2, 10),
     },
     {
         id: 3,
@@ -29,6 +77,9 @@ const MOCK_LOGS = [
         scrapeStatus: "pending",
         analyzeTime: "2025-11-14 14:58",
         analyzeStatus: "pending",
+        realReviewPercent: 72,
+        realReviews: [],
+        fakeReviews: [],
     },
     {
         id: 4,
@@ -39,6 +90,9 @@ const MOCK_LOGS = [
         scrapeStatus: "scraped",
         analyzeTime: "2025-11-14 15:03",
         analyzeStatus: "error",
+        realReviewPercent: 85,
+        realReviews: [],
+        fakeReviews: [],
     },
     {
         id: 5,
@@ -49,6 +103,9 @@ const MOCK_LOGS = [
         scrapeStatus: "scraped",
         analyzeTime: "2025-11-14 15:32",
         analyzeStatus: "analyzed",
+        realReviewPercent: 50,
+        realReviews: slice(reviewPoolReal, 5, 10),
+        fakeReviews: slice(reviewPoolFake, 3, 10),
     },
     {
         id: 6,
@@ -59,6 +116,9 @@ const MOCK_LOGS = [
         scrapeStatus: "pending",
         analyzeTime: "2025-11-14 16:07",
         analyzeStatus: "pending",
+        realReviewPercent: null,
+        realReviews: [],
+        fakeReviews: [],
     },
     {
         id: 7,
@@ -69,6 +129,9 @@ const MOCK_LOGS = [
         scrapeStatus: "scraped",
         analyzeTime: "2025-11-15 09:12",
         analyzeStatus: "analyzed",
+        realReviewPercent: 62,
+        realReviews: slice(reviewPoolReal, 2, 12),
+        fakeReviews: slice(reviewPoolFake, 1, 8),
     },
     {
         id: 8,
@@ -79,6 +142,9 @@ const MOCK_LOGS = [
         scrapeStatus: "scraped",
         analyzeTime: "2025-11-15 10:24",
         analyzeStatus: "error",
+        realReviewPercent: 22,
+        realReviews: [],
+        fakeReviews: [],
     },
     {
         id: 9,
@@ -89,6 +155,9 @@ const MOCK_LOGS = [
         scrapeStatus: "scraped",
         analyzeTime: "2025-11-15 11:47",
         analyzeStatus: "analyzed",
+        realReviewPercent: 95,
+        realReviews: slice(reviewPoolReal, 0, 16),
+        fakeReviews: slice(reviewPoolFake, 5, 2),
     },
     {
         id: 10,
@@ -99,6 +168,9 @@ const MOCK_LOGS = [
         scrapeStatus: "pending",
         analyzeTime: "-",
         analyzeStatus: "pending",
+        realReviewPercent: null,
+        realReviews: [],
+        fakeReviews: [],
     },
 ];
 

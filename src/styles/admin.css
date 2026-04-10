@@ -1,25 +1,26 @@
 /* ===== ADMIN LOGIN ===== */
 .admin-login-wrapper {
   min-height: 100vh;
-  background: #eaf4ff;
+  background: #0f1923;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .admin-login-card {
-  background: #fff;
+  background: #1a2736;
   border-radius: 16px;
   padding: 48px 40px;
   width: 400px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   text-align: center;
+  border: 1px solid #2a3a4e;
 }
 
 .admin-login-card h1 {
   font-size: 32px;
   font-weight: 700;
-  color: #222;
+  color: #e8edf3;
   margin-bottom: 32px;
 }
 
@@ -32,18 +33,20 @@
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #555;
+  color: #8a9bb5;
   margin-bottom: 6px;
 }
 
 .admin-login-card input {
   width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid #dde5f0;
+  border: 1.5px solid #2a3a4e;
   border-radius: 8px;
   font-size: 15px;
   outline: none;
   transition: border-color 0.2s;
+  background: #0f1923;
+  color: #e0e6ed;
 }
 
 .admin-login-card input:focus {
@@ -69,7 +72,7 @@
 }
 
 .admin-login-card .login-error {
-  color: #e74c3c;
+  color: #F2455C;
   font-size: 14px;
   margin-top: 12px;
 }
@@ -77,23 +80,24 @@
 /* ===== ADMIN DASHBOARD ===== */
 .admin-dashboard {
   min-height: 100vh;
-  background: #eaf4ff;
+  background: #0f1923;
   padding: 40px;
 }
 
 .admin-dashboard-card {
   max-width: 1100px;
   margin: 0 auto;
-  background: #fff;
+  background: #1a2736;
   border-radius: 16px;
   padding: 40px 48px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid #2a3a4e;
 }
 
 .admin-dashboard-card h1 {
   font-size: 36px;
   font-weight: 700;
-  color: #222;
+  color: #e8edf3;
   margin-bottom: 32px;
 }
 
@@ -106,33 +110,33 @@
 
 .summary-item {
   flex: 1;
-  background: #f4f8ff;
+  background: #243447;
   border-radius: 10px;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  border: 1.5px solid #e4ecf7;
+  border: 1.5px solid #2e4460;
 }
 
 .summary-count {
   font-size: 24px;
   font-weight: 700;
-  color: #333;
+  color: #e0e6ed;
 }
 
 .summary-label {
   font-size: 13px;
   font-weight: 600;
-  color: #888;
+  color: #6b7f99;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.summary-completed .summary-count { color: #4CAF50; }
+.summary-completed .summary-count { color: #2EDF94; }
 .summary-pending .summary-count { color: #FFC107; }
-.summary-errors .summary-count { color: #F44336; }
+.summary-errors .summary-count { color: #F2455C; }
 
 /* Clickable summary items */
 .summary-clickable {
@@ -143,14 +147,14 @@
 
 .summary-clickable:hover {
   border-color: #5D96E5;
-  box-shadow: 0 2px 8px rgba(93, 150, 229, 0.15);
+  box-shadow: 0 2px 12px rgba(93, 150, 229, 0.2);
   transform: translateY(-2px);
 }
 
 .summary-active {
   border-color: #5D96E5;
-  box-shadow: 0 2px 12px rgba(93, 150, 229, 0.25);
-  background: #eaf1fd;
+  box-shadow: 0 2px 16px rgba(93, 150, 229, 0.3);
+  background: #1e3550;
 }
 
 /* Search bar */
@@ -161,11 +165,17 @@
 .admin-search input {
   width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid #dde5f0;
+  border: 1.5px solid #2a3a4e;
   border-radius: 8px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
+  background: #0f1923;
+  color: #e0e6ed;
+}
+
+.admin-search input::placeholder {
+  color: #556b84;
 }
 
 .admin-search input:focus {
@@ -184,12 +194,12 @@
 }
 
 .admin-table-wrapper::-webkit-scrollbar-track {
-  background: #f0f3f8;
+  background: #1a2736;
   border-radius: 3px;
 }
 
 .admin-table-wrapper::-webkit-scrollbar-thumb {
-  background: #c4d4ea;
+  background: #3a506e;
   border-radius: 3px;
 }
 
@@ -201,7 +211,7 @@
 .admin-table thead th {
   position: sticky;
   top: 0;
-  background: #fff;
+  background: #1a2736;
   z-index: 1;
 }
 
@@ -209,7 +219,7 @@
 .empty-row {
   text-align: center !important;
   padding: 40px 12px !important;
-  color: #aaa;
+  color: #556b84;
   font-size: 15px;
 }
 
@@ -225,7 +235,7 @@
   color: #5D96E5;
   padding: 14px 12px;
   text-align: center;
-  border-bottom: 2px solid #eef3fa;
+  border-bottom: 2px solid #2a3a4e;
 }
 
 .admin-table thead th:first-child {
@@ -233,12 +243,21 @@
 }
 
 .admin-table tbody tr {
-  border-bottom: 1px solid #f0f3f8;
+  border-bottom: 1px solid #243447;
   transition: background 0.15s;
 }
 
 .admin-table tbody tr:hover {
-  background: #f8fbff;
+  background: #1e3040;
+}
+
+/* Clickable completed rows */
+.admin-row-clickable {
+  cursor: pointer;
+}
+
+.admin-row-clickable:hover {
+  background: #1e3550 !important;
 }
 
 .admin-table tbody td {
@@ -246,7 +265,7 @@
   text-align: center;
   vertical-align: middle;
   font-size: 14px;
-  color: #333;
+  color: #c5cfdb;
 }
 
 .admin-table tbody td:first-child {
@@ -263,7 +282,7 @@
 .product-name {
   font-weight: 600;
   font-size: 14px;
-  color: #222;
+  color: #e0e6ed;
 }
 
 .product-url {
@@ -275,6 +294,54 @@
 
 .product-url:hover {
   text-decoration: underline;
+}
+
+/* Ratio bar */
+.ratio-bar-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ratio-bar {
+  display: flex;
+  width: 100px;
+  height: 14px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #2a3a4e;
+}
+
+.ratio-bar-green {
+  background: #2EDF94;
+  height: 100%;
+  transition: width 0.4s ease;
+  border-radius: 7px 0 0 7px;
+}
+
+.ratio-bar-red {
+  background: #F2455C;
+  height: 100%;
+  transition: width 0.4s ease;
+  border-radius: 0 7px 7px 0;
+}
+
+/* When green is 100%, round both sides */
+.ratio-bar-green:only-child,
+.ratio-bar-green[style*="width: 100%"] {
+  border-radius: 7px;
+}
+
+/* When red is 100%, round both sides */
+.ratio-bar-red:first-child,
+.ratio-bar-red[style*="width: 100%"] {
+  border-radius: 7px;
+}
+
+.ratio-na {
+  font-size: 12px;
+  color: #556b84;
+  font-style: italic;
 }
 
 /* Status badges */
@@ -291,16 +358,16 @@
 
 .badge-scraped,
 .badge-analyzed {
-  background: #4CAF50;
+  background: #2EDF94;
 }
 
 
 .badge-pending-sm {
-  background: #FFC107;
+  background: #B8E55D;
 }
 
 .badge-error-sm {
-  background: #F44336;
+  background: #F2455C;
 }
 
 /* Timestamp + badge stacking */
@@ -313,7 +380,7 @@
 
 .status-time {
   font-size: 13px;
-  color: #555;
+  color: #8a9bb5;
 }
 
 /* Refresh button */
@@ -330,7 +397,7 @@
 }
 
 .refresh-btn:hover {
-  background: #eef4ff;
+  background: #243447;
 }
 
 .refresh-btn:active {
@@ -340,6 +407,7 @@
 .refresh-btn img {
   width: 28px;
   height: 28px;
+  filter: brightness(0) saturate(100%) invert(62%) sepia(18%) saturate(646%) hue-rotate(176deg) brightness(92%) contrast(87%);
 }
 
 /* Logout button */

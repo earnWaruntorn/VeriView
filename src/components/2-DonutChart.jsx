@@ -1,7 +1,8 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const DonutChart = ({ data }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const radius = 100;
   const strokeWidth = 28;
   const size = (radius + strokeWidth) * 2;
@@ -24,6 +25,7 @@ const DonutChart = ({ data }) => {
         fakeReviews: data?.fakeReviews ?? [],
         realSentiment: data?.realSentiment ?? null,
         fakeSentiment: data?.fakeSentiment ?? null,
+        productUrl: searchParams.get("url") || "",
       },
     });
   };

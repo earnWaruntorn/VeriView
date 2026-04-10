@@ -37,6 +37,12 @@ const DetailPage = () => {
     const stateRealReviews = state.realReviews;
     const stateFakeReviews = state.fakeReviews;
 
+    const productUrl = state.productUrl ?? "";
+    const goBackToResult = () => {
+        const path = productUrl ? `/result?url=${encodeURIComponent(productUrl)}` : "/result";
+        navigate(path);
+    };
+
     const [showReal, setShowReal] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedSentiment, setSelectedSentiment] = useState(null);
@@ -88,10 +94,10 @@ const DetailPage = () => {
                             className="detail-back-btn"
                             src={backBtnSvg}
                             alt="Go back"
-                            onClick={() => navigate(-1)}
+                            onClick={goBackToResult}
                             role="button"
                             tabIndex={0}
-                            onKeyDown={(e) => e.key === "Enter" && navigate(-1)}
+                            onKeyDown={(e) => e.key === "Enter" && goBackToResult()}
                         />
                     </div>
 

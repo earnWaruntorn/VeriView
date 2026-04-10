@@ -3,6 +3,8 @@ import Home from "./pages/Home";
 import ResultPage from "./pages/ResultPage";
 import DetailPage from "./pages/DetailPage";
 import AdminPage from "./pages/AdminPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
+import LogResultPage from "./pages/LogResultPage";
 
 function App() {
   return (
@@ -12,6 +14,8 @@ function App() {
         <Route path="/result" element={<ResultPage />} />
         <Route path="/detail" element={<DetailPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/log-result" element={<LogResultPage />} />
       </Routes>
     </BrowserRouter>
   );

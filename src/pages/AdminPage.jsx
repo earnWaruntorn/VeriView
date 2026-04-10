@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import refreshIcon from "../assets/refresh-icon.svg";
 import MOCK_LOGS from "../data/mockLogs";
 import "../styles/admin.css";
@@ -27,14 +28,48 @@ function truncateUrl(url, maxLen = 28) {
     return url.slice(0, maxLen) + "...";
 }
 
+/**
+ * Returns the snapped green (real) width percentage based on the 1:4 tier system.
+ * 1-25% real  → green 25%
+ * 26-50% real → green 50%
+ * 51-75% real → green 75%
+ * 76-100% real → green 100%
+ */
+function getRatioTier(realPercent) {
+    if (realPercent == null) return null;
+    if (realPercent <= 25) return 25;
+    if (realPercent <= 50) return 50;
+    if (realPercent <= 75) return 75;
+    return 100;
+}
+
 const AdminPage = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [logs, setLogs] = useState(MOCK_LOGS);
+    const navigate = useNavigate();
+    const [logs, setLogs] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState(null);
+
+    // Fetch logs from backend; fall back to mock data when API is unreachable
+    const fetchLogs = async () => {
+        try {
+            const res = await fetch("http://localhost:8000/api/admin/logs");
+            if (!res.ok) throw new Error("API error");
+            const data = await res.json();
+            setLogs(data);   // real data replaces mock entirely
+        } catch {
+            // Backend not available – use mock data as fallback
+            setLogs(MOCK_LOGS);
+        }
+    };
+
+    // Load logs once user is authenticated
+    useEffect(() => {
+        if (sessionStorage.getItem("isAdminLoggedIn") !== "true") {
+            navigate("/admin/login");
+        } else {
+            fetchLogs();
+        }
+    }, [navigate]);
 
     // Filter logs by search query AND status filter
     const filteredLogs = useMemo(() => {
@@ -86,17 +121,10 @@ const AdminPage = () => {
         return { total, completed, pending, errors };
     }, [logs]);
 
-    const handleLogin = (e) => {
-        e.preventDefault();
-        if (username === "admin" && password === "admin123") {
-            setIsLoggedIn(true);
-            setError("");
-        } else {
-            setError("Invalid username or password");
-        }
-    };
 
-    const handleRefresh = (id) => {
+
+    const handleRefresh = async (id) => {
+        // Optimistically set to pending in the UI
         setLogs((prev) =>
             prev.map((log) =>
                 log.id === id
@@ -105,61 +133,54 @@ const AdminPage = () => {
                         scrapeStatus: "pending",
                         analyzeStatus: "pending",
                         overallStatus: "pending",
+                        realReviewPercent: null,
                         scrapeTime: new Date().toISOString().slice(0, 16).replace("T", " "),
                         analyzeTime: "-",
                     }
                     : log
             )
         );
-        console.log(`Re-scraping and re-analyzing log #${id}`);
+
+        try {
+            // Try backend refresh endpoint
+            await fetch(`http://localhost:8000/api/admin/refresh/${id}`, {
+                method: "POST",
+            });
+            // Re-fetch updated logs from backend
+            await fetchLogs();
+        } catch {
+            // Backend not available – keep the optimistic local update
+            console.log(`Re-scraping and re-analyzing log #${id} (mock)`);
+        }
+    };
+
+    const handleViewLog = (log) => {
+        // Only allow navigation for fully analyzed logs
+        const isComplete =
+            log.scrapeStatus === "scraped" && log.analyzeStatus === "analyzed";
+        if (!isComplete) return;
+
+        const totalReviews = (log.realReviews?.length || 0) + (log.fakeReviews?.length || 0);
+        const realPercent = log.realReviewPercent ?? 0;
+        const fakePercent = 100 - realPercent;
+
+        navigate("/admin/log-result", {
+            state: {
+                productName: log.productName,
+                productUrl: log.productUrl,
+                totalReviews,
+                realPercent,
+                fakePercent,
+                realReviews: log.realReviews || [],
+                fakeReviews: log.fakeReviews || [],
+            },
+        });
     };
 
     const handleLogout = () => {
-        setIsLoggedIn(false);
-        setUsername("");
-        setPassword("");
+        sessionStorage.removeItem("isAdminLoggedIn");
+        navigate("/admin/login");
     };
-
-    // LOGIN VIEW
-    if (!isLoggedIn) {
-        return (
-            <div className="admin-login-wrapper">
-                <form className="admin-login-card" onSubmit={handleLogin}>
-                    <h1>Login</h1>
-
-                    <div className="input-group">
-                        <label htmlFor="admin-username">Username</label>
-                        <input
-                            id="admin-username"
-                            type="text"
-                            placeholder="Enter username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            autoComplete="username"
-                        />
-                    </div>
-
-                    <div className="input-group">
-                        <label htmlFor="admin-password">Password</label>
-                        <input
-                            id="admin-password"
-                            type="password"
-                            placeholder="Enter password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            autoComplete="current-password"
-                        />
-                    </div>
-
-                    <button type="submit" className="login-btn">
-                        Login
-                    </button>
-
-                    {error && <p className="login-error">{error}</p>}
-                </form>
-            </div>
-        );
-    }
 
     // DASHBOARD VIEW
     return (
@@ -220,6 +241,7 @@ const AdminPage = () => {
                         <thead>
                             <tr>
                                 <th>Product</th>
+                                <th>Result</th>
                                 <th>Submitted At</th>
                                 <th>Last Scraped</th>
                                 <th>Last Analyzed</th>
@@ -229,63 +251,104 @@ const AdminPage = () => {
                         <tbody>
                             {filteredLogs.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="empty-row">
+                                    <td colSpan="6" className="empty-row">
                                         No logs found
                                     </td>
                                 </tr>
                             ) : (
-                                filteredLogs.map((log) => (
-                                    <tr key={log.id}>
-                                        {/* Product */}
-                                        <td>
-                                            <div className="product-cell">
-                                                <span className="product-name">{log.productName}</span>
-                                                <a
-                                                    className="product-url"
-                                                    href={log.productUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                filteredLogs.map((log) => {
+                                    const isComplete =
+                                        log.scrapeStatus === "scraped" && log.analyzeStatus === "analyzed";
+                                    return (
+                                        <tr
+                                            key={log.id}
+                                            className={isComplete ? "admin-row-clickable" : ""}
+                                            onClick={() => handleViewLog(log)}
+                                        >
+                                            {/* Product */}
+                                            <td>
+                                                <div className="product-cell">
+                                                    <span className="product-name">{log.productName}</span>
+                                                    <a
+                                                        className="product-url"
+                                                        href={log.productUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        {truncateUrl(log.productUrl)}
+                                                    </a>
+                                                </div>
+                                            </td>
+
+                                            {/* Ratio Bar */}
+                                            <td>
+                                                {(() => {
+                                                    const hasIncomplete =
+                                                        log.scrapeStatus === "pending" ||
+                                                        log.scrapeStatus === "error" ||
+                                                        log.analyzeStatus === "pending" ||
+                                                        log.analyzeStatus === "error";
+                                                    if (hasIncomplete) {
+                                                        return <span className="ratio-na">—</span>;
+                                                    }
+                                                    const tier = getRatioTier(log.realReviewPercent);
+                                                    if (tier === null) {
+                                                        return <span className="ratio-na">N/A</span>;
+                                                    }
+                                                    return (
+                                                        <div className="ratio-bar-wrapper">
+                                                            <div className="ratio-bar">
+                                                                <div
+                                                                    className="ratio-bar-green"
+                                                                    style={{ width: `${tier}%` }}
+                                                                />
+                                                                <div
+                                                                    className="ratio-bar-red"
+                                                                    style={{ width: `${100 - tier}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </td>
+
+                                            {/* Submitted At */}
+                                            <td>{log.submittedAt}</td>
+
+                                            {/* Last Scraped */}
+                                            <td>
+                                                <div className="status-cell">
+                                                    <span className="status-time">{log.scrapeTime}</span>
+                                                    <span className={getBadgeClass(log.scrapeStatus)}>
+                                                        {capitalize(log.scrapeStatus)}
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            {/* Last Analyzed */}
+                                            <td>
+                                                <div className="status-cell">
+                                                    <span className="status-time">{log.analyzeTime}</span>
+                                                    <span className={getBadgeClass(log.analyzeStatus)}>
+                                                        {capitalize(log.analyzeStatus)}
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            {/* Refresh */}
+                                            <td>
+                                                <button
+                                                    className="refresh-btn"
+                                                    title="Re-scrape and re-analyze"
+                                                    onClick={(e) => { e.stopPropagation(); handleRefresh(log.id); }}
                                                 >
-                                                    {truncateUrl(log.productUrl)}
-                                                </a>
-                                            </div>
-                                        </td>
-
-                                        {/* Submitted At */}
-                                        <td>{log.submittedAt}</td>
-
-                                        {/* Last Scraped */}
-                                        <td>
-                                            <div className="status-cell">
-                                                <span className="status-time">{log.scrapeTime}</span>
-                                                <span className={getBadgeClass(log.scrapeStatus)}>
-                                                    {capitalize(log.scrapeStatus)}
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        {/* Last Analyzed */}
-                                        <td>
-                                            <div className="status-cell">
-                                                <span className="status-time">{log.analyzeTime}</span>
-                                                <span className={getBadgeClass(log.analyzeStatus)}>
-                                                    {capitalize(log.analyzeStatus)}
-                                                </span>
-                                            </div>
-                                        </td>
-
-                                        {/* Refresh */}
-                                        <td>
-                                            <button
-                                                className="refresh-btn"
-                                                title="Re-scrape and re-analyze"
-                                                onClick={() => handleRefresh(log.id)}
-                                            >
-                                                <img src={refreshIcon} alt="Refresh" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
+                                                    <img src={refreshIcon} alt="Refresh" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
