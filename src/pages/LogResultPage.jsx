@@ -47,14 +47,38 @@ const LogResultPage = () => {
         navigate("/admin");
     };
 
-    const [showReal, setShowReal] = useState(true);
+    // viewMode: null = all reviews (default), "real" = real only, "fake" = fake only
+    const [viewMode, setViewMode] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedSentiment, setSelectedSentiment] = useState(null);
     const [hoveredSentiment, setHoveredSentiment] = useState(null);
 
-    const rawReviews = showReal
-        ? (stateRealReviews && stateRealReviews.length > 0 ? stateRealReviews : demoRealReviews)
-        : (stateFakeReviews && stateFakeReviews.length > 0 ? stateFakeReviews : demoFakeReviews);
+    const handleViewModeToggle = (mode) => {
+        if (viewMode === mode) {
+            // Clicking the active filter again → back to default
+            setViewMode(null);
+        } else {
+            setViewMode(mode);
+        }
+        setCurrentPage(1);
+        setSelectedSentiment(null);
+    };
+
+    // Resolve review arrays (use state data if available, fallback to mock)
+    const realReviews = stateRealReviews && stateRealReviews.length > 0
+        ? stateRealReviews
+        : demoRealReviews;
+    const fakeReviews = stateFakeReviews && stateFakeReviews.length > 0
+        ? stateFakeReviews
+        : demoFakeReviews;
+
+    // Build the displayed reviews based on viewMode
+    const rawReviews = useMemo(() => {
+        if (viewMode === "real") return realReviews;
+        if (viewMode === "fake") return fakeReviews;
+        // Default: combine both real and fake
+        return [...realReviews, ...fakeReviews];
+    }, [viewMode, realReviews, fakeReviews]);
 
     const reviews = rawReviews.filter(r => !selectedSentiment || r.sentiment === selectedSentiment);
 
@@ -65,12 +89,6 @@ const LogResultPage = () => {
     const safePage = Math.min(currentPage, totalPages);
     const startIdx = (safePage - 1) * REVIEWS_PER_PAGE;
     const pageReviews = reviews.slice(startIdx, startIdx + REVIEWS_PER_PAGE);
-
-    const handleToggle = () => {
-        setShowReal((prev) => !prev);
-        setCurrentPage(1);
-        setSelectedSentiment(null);
-    };
 
     const goToPage = (p) => {
         if (p >= 1 && p <= totalPages) setCurrentPage(p);
@@ -102,7 +120,7 @@ const LogResultPage = () => {
                     </button>
                 </div>
 
-                {/* Info banner */}
+                {/* Info banner — clickable Real/Fake filters */}
                 <div className="logresult-info-banner">
                     <div className="logresult-info-item">
                         <span className="info-label">Product URL</span>
@@ -115,41 +133,36 @@ const LogResultPage = () => {
                         </span>
                     </div>
                     <div className="logresult-info-divider" />
-                    <div className="logresult-info-item">
+                    <div
+                        className={`logresult-info-item logresult-info-clickable ${viewMode === "real" ? "logresult-filter-real-active" : ""}`}
+                        onClick={() => handleViewModeToggle("real")}
+                    >
                         <span className="info-label">Real Reviews</span>
                         <span className="info-value">{realPercent}%</span>
                     </div>
                     <div className="logresult-info-divider" />
-                    <div className="logresult-info-item">
+                    <div
+                        className={`logresult-info-item logresult-info-clickable ${viewMode === "fake" ? "logresult-filter-fake-active" : ""}`}
+                        onClick={() => handleViewModeToggle("fake")}
+                    >
                         <span className="info-label">Fake Reviews</span>
                         <span className="info-value">{fakePercent}%</span>
                     </div>
                 </div>
 
-                {/* Ratio bar */}
-                <div className="logresult-ratio-row">
-                    <div className="logresult-ratio-bar-lg">
-                        <div className="logresult-ratio-green" style={{ width: `${realPercent}%` }} />
-                        <div className="logresult-ratio-red" style={{ width: `${fakePercent}%` }} />
+                {/* Active filter indicator */}
+                {viewMode && (
+                    <div className={`logresult-filter-badge ${viewMode === "real" ? "badge-real" : "badge-fake"}`}>
+                        Showing {viewMode === "real" ? "Real" : "Fake"} Reviews
+                        <span className="logresult-filter-badge-count">({rawReviews.length})</span>
+                        <button
+                            className="logresult-filter-badge-clear"
+                            onClick={() => { setViewMode(null); setCurrentPage(1); setSelectedSentiment(null); }}
+                        >
+                            ✕
+                        </button>
                     </div>
-                    <div className="logresult-ratio-label">
-                        <span className="real-label">{realPercent}% Real</span>
-                        <span className="fake-label">{fakePercent}% Fake</span>
-                    </div>
-                </div>
-
-                {/* Toggle Real-Fake */}
-                <div className="logresult-toggle-row">
-                    <button
-                        className={`logresult-toggle-pill ${showReal ? "toggle-real" : "toggle-fake"}`}
-                        onClick={handleToggle}
-                    >
-                        <span className="logresult-toggle-label">
-                            {showReal ? "Real" : "Fake"}
-                        </span>
-                        <span className="logresult-toggle-knob" />
-                    </button>
-                </div>
+                )}
 
                 {/* Sentiment Bar */}
                 <div className="logresult-sentiment-section">
