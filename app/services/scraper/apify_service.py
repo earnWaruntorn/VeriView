@@ -32,16 +32,18 @@ class ApifyService:
     def get_product_reviews(self):
         run_input = {
             "urls": [self.url],
-            "max_items_per_url": 20,
-            "max_retries_per_url": 2,
-            "proxy": { "useApifyProxy": False },
+            "proxyConfiguration": {
+                "useApifyProxy": True,
+                "apifyProxyGroups": ["RESIDENTIAL"],
+            },
         }
-
-        run = self.client.actor("ecomscrape/lazada-reviews-scraper").call(run_input=run_input)
+        run = self.client.actor("getdataforme/lazada-product-review-scraper").call(
+            run_input=run_input
+        )
 
         product_reviews = []
         print("💾 Check your data here: https://console.apify.com/storage/datasets/" + run["defaultDatasetId"])
         for item in self.client.dataset(run["defaultDatasetId"]).iterate_items():
             print(item)
-            # item_json = eval(item)
             product_reviews.append(item)
+        return product_reviews

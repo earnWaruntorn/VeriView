@@ -39,8 +39,20 @@ class ProductRoute:
                 url:
                   type: string
                   example: "https://www.lazada.co.th/products/abc123"
+        responses:
+          201:
+            description: Product created successfully
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Product created"
+                product_id:
+                  type: integer
+          400:
+            description: Invalid URL or missing parameters
         """
-
         return self.product_controller.post_product_controller()
     
     def get_product_route(self):
@@ -56,7 +68,30 @@ class ProductRoute:
             name: product_id
             required: true
             type: integer
-            example: 1
+            example: 10
+        responses:
+          200:
+            description: Product info retrieved successfully
+            schema:
+              type: object
+              properties:
+                product_name:
+                  type: string
+                product_code:
+                  type: string
+                store:
+                  type: string
+                price:
+                  type: number
+                status:
+                  type: string
+                last_scraped_product:
+                  type: string
+                last_scraped_reviews:
+                  type: string
+                last_predicted:
+                  type: string
+          404:
+            description: Product not found
         """
-
         return self.product_controller.get_product_information_controller()

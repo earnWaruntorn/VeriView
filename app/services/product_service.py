@@ -3,7 +3,6 @@ from app.infrastructure.database import get_conn, release_conn
 from app.services.scraper.apify_service import ApifyService
 
 class ProductService:
-
     def format_product_code(self, url):
         product_code_format = r'pdp-i\d*-s\d*'
         product_code =  re.search(product_code_format, url)
@@ -40,7 +39,7 @@ class ProductService:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT Get_ProductInfo(%s);",
+                    "SELECT get_productinfo(%s);",
                     (int(product_id),)
                 )
                 row = cur.fetchone()
