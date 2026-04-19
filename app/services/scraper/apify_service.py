@@ -20,7 +20,7 @@ class ApifyService:
         "urls": [self.url]
         }
 
-        run = self.client.actor("ecomscrape/lazada-product-scraper").call(run_input=run_input)
+        run = self.client.actor("ecomscrape/lazada-product-scraper-rental").call(run_input=run_input)
 
         product_info = []
         print("💾 Check your data here: https://console.apify.com/storage/datasets/" + run["defaultDatasetId"])

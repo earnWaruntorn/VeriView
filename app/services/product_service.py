@@ -75,13 +75,20 @@ class ProductService:
         try:
             with conn.cursor() as cur:
                 try:
+                    raw_image_url = product_detail["image"]["image"][0]
+                    if raw_image_url.startswith("//"):
+                        final_image_url = "https:" + raw_image_url
+                    else:
+                        final_image_url = raw_image_url
                     cur.execute(
-                        "CALL Post_ProductInfo(%s, %s, %s, %s);",
+                        "CALL Post_ProductInfo(%s, %s, %s, %s, %s);",
                         (
                             product_id,
                             product_detail["name"], 
                             product_detail["seller"]["name"],
-                            product_detail["sku"]["0"]["price"]["sale_price"]["value"])
+                            product_detail["sku"]["0"]["price"]["sale_price"]["value"],
+                            final_image_url  # ส่ง URL ที่สมบูรณ์เข้าไป
+                        )
                     )
                     conn.commit()
                     return True

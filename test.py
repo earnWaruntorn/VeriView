@@ -14,7 +14,7 @@ run_input = {
 }
 
 # Run the Actor and wait for it to finish
-run = client.actor("getdataforme/lazada-product-review-scraper").call(run_input=run_input)
+run = client.actor("ecomscrape/lazada-product-scraper-rental").call(run_input=run_input)
 
 # Fetch and print Actor results from the run's dataset (if there are any)
 print("💾 Check your data here: https://console.apify.com/storage/datasets/" + run["defaultDatasetId"])
