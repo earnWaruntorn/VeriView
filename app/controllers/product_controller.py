@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from app.services.product_service import ProductService
+import traceback
 
 class ProductController:
     def __init__(self):
@@ -15,7 +16,7 @@ class ProductController:
         
         product_code_match = self.product_service.format_product_code(url)
         if not product_code_match:
-            return {"error": "Invalid product URL format"}, 422
+            return {"error": "Invalid product URL format", "test": product_code_match}, 422
         product_code = product_code_match.group(0)
 
         product_id = self.product_service.get_product_id(product_code)
@@ -61,6 +62,7 @@ class ProductController:
 
         except Exception as e:
             print("Controller error:", e)
+            traceback.print_exc()
             return {"error": "Internal server error"}, 500
 
         

@@ -6,7 +6,7 @@ import json
 
 class ProductService:
     def format_product_code(self, url):
-        product_code_format = r'pdp-i\d*-s\d*'
+        product_code_format = r'i\d*-s\d*'
         product_code =  re.search(product_code_format, url)
         return product_code
 
@@ -77,7 +77,10 @@ class ProductService:
         try:
             with conn.cursor() as cur:
                 try:
-                    raw_image_url = product_detail["image"][0]["image"]
+                    raw_image_url = (
+                        (product_detail.get("image") or [{}])[0].get("image")
+                        or product_detail.get("seller", {}).get("seller_icon")
+                    )
                     if raw_image_url.startswith("//"):
                         final_image_url = "https:" + raw_image_url
                     else:
@@ -97,6 +100,7 @@ class ProductService:
                 except Exception as e:
                     conn.rollback()
                     print("Database error:", str(e))
+                    print("PRODUCT DETAIL:", json.dumps(product_detail, indent=2))
                     traceback.print_exc()
                     return False
         finally:

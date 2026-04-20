@@ -30,9 +30,9 @@ class ReviewController:
                     response_data["error"] = "Failed to scrape reviews from Lazada"
                     return jsonify(response_data), 502
 
-                success = self.review_service.post_reviews(product_id, scraped_reviews)
-                if not success:
-                    response_data["error"] = "Failed to save scraped reviews to database"
+                success_count = self.review_service.post_reviews(product_id, scraped_reviews)
+                if success_count == 0:
+                    response_data["error"] = "No reviews were saved"
                     return jsonify(response_data), 500
             
             reviews = self.review_service.get_reviews(product_id)

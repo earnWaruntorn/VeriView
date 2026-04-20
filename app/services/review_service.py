@@ -38,18 +38,32 @@ class ReviewService:
         scraped_reviews = apify_service.get_product_reviews()
         return scraped_reviews
     
-    def post_review(self, product_id, review):
+    def get_latest_version(self, product_id):
+        conn = get_conn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT Get_ReviewLatestVersion(%s);",
+                    (int(product_id),)
+                )
+                row = cur.fetchone()
+                return row[0]
+        finally:
+            release_conn(conn)
+    
+    def post_review(self, product_id, review, version):
         conn = get_conn()
         try:
             with conn.cursor() as cur:
                 try:
                     cur.execute(
-                        "CALL Post_ScrapedReview(%s, %s, %s, %s);",
+                        "CALL Post_ScrapedReview(%s, %s, %s, %s, %s);",
                         (
                             review["Review_Id"],
                             int(product_id), 
                             review["Body"],
-                            int(review["Rating"]))
+                            int(review["Rating"]),
+                            version)
                     )
                     conn.commit()
                     return True
@@ -61,9 +75,21 @@ class ReviewService:
             release_conn(conn)
     
     def post_reviews(self, product_id, reviews):
+        version = self.get_latest_version(product_id) or 0
+        new_version = version + 1
+
+        success_count = 0
+
         for r in reviews:
-            success = self.post_review(product_id, r)
-        return success
+            body = r.get("Body")
+
+            if not body:
+                continue
+
+            if self.post_review(product_id, r, new_version):
+                success_count += 1
+
+        return success_count
     
     def post_predicted_review(self, product_id, review):
         conn = get_conn()
