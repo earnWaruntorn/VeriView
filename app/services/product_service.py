@@ -1,6 +1,8 @@
 import re
+import traceback
 from app.infrastructure.database import get_conn, release_conn
 from app.services.scraper.apify_service import ApifyService
+import json
 
 class ProductService:
     def format_product_code(self, url):
@@ -75,7 +77,7 @@ class ProductService:
         try:
             with conn.cursor() as cur:
                 try:
-                    raw_image_url = product_detail["image"]["image"][0]
+                    raw_image_url = product_detail["image"][0]["image"]
                     if raw_image_url.startswith("//"):
                         final_image_url = "https:" + raw_image_url
                     else:
@@ -87,14 +89,15 @@ class ProductService:
                             product_detail["name"], 
                             product_detail["seller"]["name"],
                             product_detail["sku"]["0"]["price"]["sale_price"]["value"],
-                            final_image_url  # ส่ง URL ที่สมบูรณ์เข้าไป
+                            final_image_url  
                         )
                     )
                     conn.commit()
                     return True
                 except Exception as e:
                     conn.rollback()
-                    print("Database error:", e)
+                    print("Database error:", str(e))
+                    traceback.print_exc()
                     return False
         finally:
             release_conn(conn)

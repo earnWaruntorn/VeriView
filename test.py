@@ -6,10 +6,22 @@ client = ApifyClient("")
 
 # Prepare the Actor input
 run_input = {
-    "urls": ["https://www.lazada.co.th/products/pdp-i6060583359-s26296570135.html"],
-    "proxyConfiguration": {
+    "scrape_type": "specific_product_urls",   # ✅ REQUIRED
+
+    "urls": [
+        "https://www.lazada.co.th/products/pdp-i6060583359-s26296570135.html"
+    ],
+
+    "ignore_url_failures": True,
+
+    # ❌ remove max_items_per_url (not used for product URLs)
+
+    "max_retries_per_url": 5,   # ✅ increase retry
+
+    "proxy": {
         "useApifyProxy": True,
         "apifyProxyGroups": ["RESIDENTIAL"],
+        "apifyProxyCountry": "TH",   # 🔥 MOST IMPORTANT
     },
 }
 
@@ -17,8 +29,11 @@ run_input = {
 run = client.actor("ecomscrape/lazada-product-scraper-rental").call(run_input=run_input)
 
 # Fetch and print Actor results from the run's dataset (if there are any)
+product_info = []
 print("💾 Check your data here: https://console.apify.com/storage/datasets/" + run["defaultDatasetId"])
 for item in client.dataset(run["defaultDatasetId"]).iterate_items():
     print(item)
+    product_info.append(item)
+print(product_info[0])
 
 # 📚 Want to learn more 📖? Go to → https://docs.apify.com/api/client/python/docs/quick-start
