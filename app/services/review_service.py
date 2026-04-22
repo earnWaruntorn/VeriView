@@ -4,21 +4,33 @@ import pickle
 import joblib
 from pythainlp.tokenize import subword_tokenize
 import pandas as pd
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from app.infrastructure.database import get_conn, release_conn
 from app.services.scraper.apify_service import ApifyService
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-TFIDF_PATH = os.path.join(BASE_DIR, "models", "tfidf_vectorizer.pkl")
-MODEL_PATH = os.path.join(BASE_DIR, "models", "fake_review_model.pkl")
+# TFIDF_PATH = os.path.join(BASE_DIR, "models", "tfidf_vectorizer.pkl")
+# MODEL_PATH = os.path.join(BASE_DIR, "models", "fake_review_model.pkl")
+MODEL_DIR = os.path.join(BASE_DIR, "models")
 
 class ReviewService:
     def __init__(self):
-        with open(TFIDF_PATH, "rb") as f:
-            self.tfidf = joblib.load(f)
+        # with open(TFIDF_PATH, "rb") as f:
+        #     self.tfidf = joblib.load(f)
 
-        with open(MODEL_PATH, "rb") as f:
-            self.model = joblib.load(f)
+        # with open(MODEL_PATH, "rb") as f:
+        #     self.model = joblib.load(f)
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
+        
+        # 2. Load the model from the directory
+        # It will automatically find model.safetensors and config.json
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            MODEL_DIR, 
+            use_safetensors=True
+        )
+        self.model.eval()
     
     def get_product_info(self, product_id):
         conn = get_conn()
@@ -149,6 +161,40 @@ class ReviewService:
 
         return text.strip()
 
+    # def predict_reviews(self, reviews):
+    #     processed_texts = []
+    #     indices = []
+
+    #     for idx, r in enumerate(reviews):
+    #         text = r.get("review")
+    #         if text:
+    #             cleaned = self.clean_text(text)
+
+    #             tokens = subword_tokenize(
+    #                 cleaned,
+    #                 engine="wangchanberta",
+    #                 keep_whitespace=False
+    #             )
+ 
+    #             tokenized_text = " ".join(tokens)
+
+    #             processed_texts.append(tokenized_text)
+    #             indices.append(idx)
+
+    #     if not processed_texts:
+    #         return reviews
+
+    #     X = self.tfidf.transform(processed_texts)
+
+    #     preds = self.model.predict(X)
+    #     probs = self.model.predict_proba(X)
+
+    #     for i, idx in enumerate(indices):
+    #         reviews[idx]["predicted_label"] = "real" if int(preds[i]) == 0 else "fake"
+    #         reviews[idx]["prediction"] = int(preds[i])
+    #         reviews[idx]["confidence_score"] = float(max(probs[i]))
+
+    #     return reviews
     def predict_reviews(self, reviews):
         processed_texts = []
         indices = []
@@ -157,29 +203,33 @@ class ReviewService:
             text = r.get("review")
             if text:
                 cleaned = self.clean_text(text)
-
-                tokens = subword_tokenize(
-                    cleaned,
-                    engine="wangchanberta",
-                    keep_whitespace=False
-                )
- 
-                tokenized_text = " ".join(tokens)
-
-                processed_texts.append(tokenized_text)
+                processed_texts.append(cleaned)
                 indices.append(idx)
 
         if not processed_texts:
             return reviews
 
-        X = self.tfidf.transform(processed_texts)
+        inputs = self.tokenizer(
+            processed_texts, 
+            return_tensors="pt", 
+            padding=True, 
+            truncation=True, 
+            max_length=512
+        )
 
-        preds = self.model.predict(X)
-        probs = self.model.predict_proba(X)
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+            logits = outputs.logits
+            probs = torch.nn.functional.softmax(logits, dim=-1)
+            
+            preds = torch.argmax(probs, dim=-1)
 
         for i, idx in enumerate(indices):
-            reviews[idx]["predicted_label"] = "real" if int(preds[i]) == 0 else "fake"
-            reviews[idx]["prediction"] = int(preds[i])
-            reviews[idx]["confidence_score"] = float(max(probs[i]))
+            confidence = float(probs[i][preds[i]])
+            label_idx = int(preds[i])
+            
+            reviews[idx]["predicted_label"] = "real" if label_idx == 0 else "fake"
+            reviews[idx]["prediction"] = label_idx
+            reviews[idx]["confidence_score"] = confidence
 
         return reviews
