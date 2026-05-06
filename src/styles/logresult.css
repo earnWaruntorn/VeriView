@@ -90,11 +90,24 @@
   display: flex;
   height: 34px;
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 
+.logresult-sentiment-bar > :first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.logresult-sentiment-bar > :last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+.logresult-sentiment-bar > :only-child {
+  border-radius: 10px;
+}
+
 .logresult-sentiment-segment {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -122,52 +135,50 @@
   background: #F2455C;
 }
 
-.logresult-sentiment-labels {
-  display: flex;
-  margin-top: 8px;
+/* Tooltip bubble */
+.logresult-sentiment-segment::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  background: #e8edf3;
+  color: #1a2736;
   font-size: 13px;
-}
-
-.logresult-label-wrapper {
-  display: flex;
-  min-width: 0;
-  overflow: visible;
-  transition: opacity 0.3s ease;
-}
-
-.logresult-label-wrapper.faded {
-  opacity: 0.2;
-}
-
-.logresult-wrapper-positive {
-  justify-content: flex-start;
-}
-
-.logresult-wrapper-neutral {
-  justify-content: center;
-}
-
-.logresult-wrapper-negative {
-  justify-content: flex-end;
-}
-
-.logresult-label-positive {
-  color: #5D96E5;
   font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
   white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.logresult-label-neutral {
-  color: #B8E55D;
-  font-weight: 600;
-  white-space: nowrap;
+/* Tooltip arrow */
+.logresult-sentiment-segment::after {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  border: 6px solid transparent;
+  border-top-color: #e8edf3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.logresult-label-negative {
-  color: #F2455C;
-  font-weight: 600;
-  white-space: nowrap;
+.logresult-sentiment-segment:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
+
+.logresult-sentiment-segment:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
 
 /* Review List */
 .logresult-review-list {

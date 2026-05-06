@@ -15,11 +15,21 @@ const computeSentiment = (reviews) => {
     });
 
     const total = reviews.length;
-    const positive = Math.round((counts.positive / total) * 100);
-    const negative = Math.round((counts.negative / total) * 100);
-    const neutral = 100 - positive - negative;
+    const keys = ["positive", "neutral", "negative"];
+    const rawPcts = keys.map((k) => (counts[k] / total) * 100);
+    const floored = rawPcts.map((v) => Math.floor(v));
+    let remainder = 100 - floored.reduce((a, b) => a + b, 0);
 
-    return { positive, neutral, negative };
+    // Distribute remainder to entries with the largest fractional parts
+    const fractions = rawPcts.map((v, i) => ({ i, frac: v - floored[i] }));
+    fractions.sort((a, b) => b.frac - a.frac);
+    for (const { i } of fractions) {
+        if (remainder <= 0) break;
+        floored[i]++;
+        remainder--;
+    }
+
+    return { positive: floored[0], neutral: floored[1], negative: floored[2] };
 };
 
 const REVIEWS_PER_PAGE = 10;
@@ -169,84 +179,57 @@ const LogResultPage = () => {
                     <p className="logresult-sentiment-hint">Click to filter by sentiment</p>
 
                     <div className="logresult-sentiment-bar">
-                        <div
-                            className={`logresult-sentiment-segment logresult-seg-positive ${(selectedSentiment || hoveredSentiment) &&
-                                selectedSentiment !== "positive" &&
-                                hoveredSentiment !== "positive"
-                                ? "faded"
-                                : ""
-                                }`}
-                            style={{ width: `${sentiment.positive}%` }}
-                            onMouseEnter={() => setHoveredSentiment("positive")}
-                            onMouseLeave={() => setHoveredSentiment(null)}
-                            onClick={() => setSelectedSentiment(selectedSentiment === "positive" ? null : "positive")}
-                        >
-                            {sentiment.positive}%
-                        </div>
-                        <div
-                            className={`logresult-sentiment-segment logresult-seg-neutral ${(selectedSentiment || hoveredSentiment) &&
-                                selectedSentiment !== "neutral" &&
-                                hoveredSentiment !== "neutral"
-                                ? "faded"
-                                : ""
-                                }`}
-                            style={{ width: `${sentiment.neutral}%` }}
-                            onMouseEnter={() => setHoveredSentiment("neutral")}
-                            onMouseLeave={() => setHoveredSentiment(null)}
-                            onClick={() => setSelectedSentiment(selectedSentiment === "neutral" ? null : "neutral")}
-                        >
-                            {sentiment.neutral}%
-                        </div>
-                        <div
-                            className={`logresult-sentiment-segment logresult-seg-negative ${(selectedSentiment || hoveredSentiment) &&
-                                selectedSentiment !== "negative" &&
-                                hoveredSentiment !== "negative"
-                                ? "faded"
-                                : ""
-                                }`}
-                            style={{ width: `${sentiment.negative}%` }}
-                            onMouseEnter={() => setHoveredSentiment("negative")}
-                            onMouseLeave={() => setHoveredSentiment(null)}
-                            onClick={() => setSelectedSentiment(selectedSentiment === "negative" ? null : "negative")}
-                        >
-                            {sentiment.negative}%
-                        </div>
-                    </div>
-
-                    <div className="logresult-sentiment-labels">
-                        <div
-                            className={`logresult-label-wrapper logresult-wrapper-positive ${(selectedSentiment || hoveredSentiment) &&
-                                selectedSentiment !== "positive" &&
-                                hoveredSentiment !== "positive"
-                                ? "faded"
-                                : ""
-                                }`}
-                            style={{ width: `${sentiment.positive}%` }}
-                        >
-                            <span className="logresult-label-positive">Positive</span>
-                        </div>
-                        <div
-                            className={`logresult-label-wrapper logresult-wrapper-neutral ${(selectedSentiment || hoveredSentiment) &&
-                                selectedSentiment !== "neutral" &&
-                                hoveredSentiment !== "neutral"
-                                ? "faded"
-                                : ""
-                                }`}
-                            style={{ width: `${sentiment.neutral}%` }}
-                        >
-                            <span className="logresult-label-neutral">Neutral</span>
-                        </div>
-                        <div
-                            className={`logresult-label-wrapper logresult-wrapper-negative ${(selectedSentiment || hoveredSentiment) &&
-                                selectedSentiment !== "negative" &&
-                                hoveredSentiment !== "negative"
-                                ? "faded"
-                                : ""
-                                }`}
-                            style={{ width: `${sentiment.negative}%` }}
-                        >
-                            <span className="logresult-label-negative">Negative</span>
-                        </div>
+                        {sentiment.positive > 0 && (
+                            <div
+                                className={`logresult-sentiment-segment logresult-seg-positive ${(selectedSentiment || hoveredSentiment) &&
+                                    selectedSentiment !== "positive" &&
+                                    hoveredSentiment !== "positive"
+                                    ? "faded"
+                                    : ""
+                                    }`}
+                                style={{ width: `${sentiment.positive}%` }}
+                                data-tooltip="Positive"
+                                onMouseEnter={() => setHoveredSentiment("positive")}
+                                onMouseLeave={() => setHoveredSentiment(null)}
+                                onClick={() => setSelectedSentiment(selectedSentiment === "positive" ? null : "positive")}
+                            >
+                                {sentiment.positive}%
+                            </div>
+                        )}
+                        {sentiment.neutral > 0 && (
+                            <div
+                                className={`logresult-sentiment-segment logresult-seg-neutral ${(selectedSentiment || hoveredSentiment) &&
+                                    selectedSentiment !== "neutral" &&
+                                    hoveredSentiment !== "neutral"
+                                    ? "faded"
+                                    : ""
+                                    }`}
+                                style={{ width: `${sentiment.neutral}%` }}
+                                data-tooltip="Neutral"
+                                onMouseEnter={() => setHoveredSentiment("neutral")}
+                                onMouseLeave={() => setHoveredSentiment(null)}
+                                onClick={() => setSelectedSentiment(selectedSentiment === "neutral" ? null : "neutral")}
+                            >
+                                {sentiment.neutral}%
+                            </div>
+                        )}
+                        {sentiment.negative > 0 && (
+                            <div
+                                className={`logresult-sentiment-segment logresult-seg-negative ${(selectedSentiment || hoveredSentiment) &&
+                                    selectedSentiment !== "negative" &&
+                                    hoveredSentiment !== "negative"
+                                    ? "faded"
+                                    : ""
+                                    }`}
+                                style={{ width: `${sentiment.negative}%` }}
+                                data-tooltip="Negative"
+                                onMouseEnter={() => setHoveredSentiment("negative")}
+                                onMouseLeave={() => setHoveredSentiment(null)}
+                                onClick={() => setSelectedSentiment(selectedSentiment === "negative" ? null : "negative")}
+                            >
+                                {sentiment.negative}%
+                            </div>
+                        )}
                     </div>
                 </div>
 

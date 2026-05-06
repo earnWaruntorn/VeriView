@@ -132,11 +132,24 @@
   display: flex;
   height: 34px;
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+.sentiment-bar > :first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.sentiment-bar > :last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+.sentiment-bar > :only-child {
+  border-radius: 10px;
+}
+
 .sentiment-segment {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,52 +177,50 @@
   background: #F2455C;
 }
 
-.sentiment-labels {
-  display: flex;
-  margin-top: 8px;
+/* Tooltip bubble */
+.sentiment-segment::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  background: #fff;
+  color: #1e293b;
   font-size: 13px;
-}
-
-.label-wrapper {
-  display: flex;
-  min-width: 0;
-  overflow: visible;
-  transition: opacity 0.3s ease;
-}
-
-.label-wrapper.faded {
-  opacity: 0.25;
-}
-
-.wrapper-positive {
-  justify-content: flex-start;
-}
-
-.wrapper-neutral {
-  justify-content: center;
-}
-
-.wrapper-negative {
-  justify-content: flex-end;
-}
-
-.label-positive {
-  color: #5D96E5;
   font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
   white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.label-neutral {
-  color: #B8E55D;
-  font-weight: 600;
-  white-space: nowrap;
+/* Tooltip arrow */
+.sentiment-segment::after {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  border: 6px solid transparent;
+  border-top-color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.label-negative {
-  color: #F2455C;
-  font-weight: 600;
-  white-space: nowrap;
+.sentiment-segment:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
+
+.sentiment-segment:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
 
 /* Review List */
 .review-list {
