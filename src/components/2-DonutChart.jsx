@@ -16,7 +16,7 @@ const DonutChart = ({ data }) => {
   const fakeStroke = (fakePct / 100) * circumference;
 
   const handleClick = () => {
-    navigate("/detail", {
+    navigate("/result/detail", {
       state: {
         realPercent: realPct,
         fakePercent: fakePct,

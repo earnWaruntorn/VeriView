@@ -54,6 +54,7 @@
 .product-card img {
   width: 220px;
   height: 220px;
+  max-width: 100%;
   object-fit: cover;
   border-radius: 14px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);

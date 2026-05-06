@@ -96,7 +96,7 @@ const DetailPage = () => {
                     <div className="detail-header">
                         <h1>Review Details</h1>
                         <p className="detail-total">
-                            Total Reviews: <span>{totalReviews}</span>
+                            Total Reviews: <span>{reviews.length}</span>
                         </p>
 
                         {/* Back button */}

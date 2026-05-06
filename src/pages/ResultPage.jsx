@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/1-Navbar";
 import ProductCard from "../components/2-ProductCard";
@@ -52,56 +53,38 @@ const ResultPage = () => {
   const navigate = useNavigate();
   const productUrl = searchParams.get("url");
 
-  const [resultData, setResultData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // If no URL provided, show demo data immediately
+  const fetchResult = async () => {
     if (!productUrl) {
-      setResultData(
-        normaliseData({
-          ...demoProductData,
-          realReviews: demoRealReviews,
-          fakeReviews: demoFakeReviews,
-        })
-      );
-      setLoading(false);
-      return;
+      return normaliseData({
+        ...demoProductData,
+        realReviews: demoRealReviews,
+        fakeReviews: demoFakeReviews,
+      });
     }
 
-    const fetchResult = async () => {
-      setLoading(true);
-      setError(null);
+    // const res = await fetch(`http://localhost:8000/api/analyze`, {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ url: productUrl }),
+    // });
+    // if (!res.ok) throw new Error("Failed to analyze product");
+    // const data = await res.json();
+    // return normaliseData(data);
 
-      try {
-        // const res = await fetch(`http://localhost:8000/api/analyze`, {
-        //   method: "POST",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify({ url: productUrl }),
-        // });
-        // if (!res.ok) throw new Error("Failed to analyze product");
-        // const data = await res.json();
-        // setResultData(normaliseData(data));
+    // ── Simulated delay with demo data (remove when backend is ready) ──
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    return normaliseData({
+      ...demoProductData,
+      realReviews: demoRealReviews,
+      fakeReviews: demoFakeReviews,
+    });
+  };
 
-        // ── Simulated delay with demo data (remove when backend is ready) ──
-        await new Promise((resolve) => setTimeout(resolve, 1200));
-        setResultData(
-          normaliseData({
-            ...demoProductData,
-            realReviews: demoRealReviews,
-            fakeReviews: demoFakeReviews,
-          })
-        );
-      } catch (err) {
-        setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResult();
-  }, [productUrl]);
+  const { data: resultData, isLoading: loading, error } = useQuery({
+    queryKey: ["productAnalysis", productUrl],
+    queryFn: fetchResult,
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+  });
 
   if (loading) {
     return (

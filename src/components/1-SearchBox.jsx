@@ -14,6 +14,12 @@ const Searchbox = () => {
     navigate(`/result?url=${encodeURIComponent(url)}`);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleAnalyze();
+    }
+  };
+
   return (
     <div className="search-box">
       <input
