@@ -4,6 +4,20 @@ import refreshIcon from "../assets/refresh-icon.svg";
 import MOCK_LOGS from "../data/mockLogs";
 import "../styles/admin.css";
 
+function formatLocalTime(utcString) {
+    if (!utcString || utcString === "-") return "-";
+    const d = new Date(utcString);
+    if (isNaN(d.getTime())) return utcString;
+    
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
 function getBadgeClass(status) {
     switch (status) {
         case "scraped":
@@ -123,21 +137,22 @@ const AdminPage = () => {
 
 
 
-    const handleRefresh = async (id) => {
+    const handleRefresh = async (log) => {
+        const id = log.id;
         // Optimistically set to pending in the UI
         setLogs((prev) =>
-            prev.map((log) =>
-                log.id === id
+            prev.map((l) =>
+                l.id === id
                     ? {
-                        ...log,
+                        ...l,
                         scrapeStatus: "pending",
                         analyzeStatus: "pending",
                         overallStatus: "pending",
                         realReviewPercent: null,
-                        scrapeTime: new Date().toISOString().slice(0, 16).replace("T", " "),
+                        scrapeTime: new Date().toISOString(),
                         analyzeTime: "-",
                     }
-                    : log
+                    : l
             )
         );
 
@@ -145,12 +160,14 @@ const AdminPage = () => {
             // Try backend refresh endpoint
             await fetch(`http://localhost:8000/api/admin/refresh/${id}`, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: log.productUrl }),
             });
             // Re-fetch updated logs from backend
             await fetchLogs();
         } catch {
             // Backend not available – keep the optimistic local update
-            console.log(`Re-scraping and re-analyzing log #${id} (mock)`);
+            console.log(`Re-scraping and re-analyzing log #${id} for URL: ${log.productUrl} (mock)`);
         }
     };
 
@@ -314,12 +331,12 @@ const AdminPage = () => {
                                             </td>
 
                                             {/* Submitted At */}
-                                            <td>{log.submittedAt}</td>
+                                            <td>{formatLocalTime(log.submittedAt)}</td>
 
                                             {/* Last Scraped */}
                                             <td>
                                                 <div className="status-cell">
-                                                    <span className="status-time">{log.scrapeTime}</span>
+                                                    <span className="status-time">{formatLocalTime(log.scrapeTime)}</span>
                                                     <span className={getBadgeClass(log.scrapeStatus)}>
                                                         {capitalize(log.scrapeStatus)}
                                                     </span>
@@ -329,7 +346,7 @@ const AdminPage = () => {
                                             {/* Last Analyzed */}
                                             <td>
                                                 <div className="status-cell">
-                                                    <span className="status-time">{log.analyzeTime}</span>
+                                                    <span className="status-time">{formatLocalTime(log.analyzeTime)}</span>
                                                     <span className={getBadgeClass(log.analyzeStatus)}>
                                                         {capitalize(log.analyzeStatus)}
                                                     </span>
@@ -341,7 +358,7 @@ const AdminPage = () => {
                                                 <button
                                                     className="refresh-btn"
                                                     title="Re-scrape and re-analyze"
-                                                    onClick={(e) => { e.stopPropagation(); handleRefresh(log.id); }}
+                                                    onClick={(e) => { e.stopPropagation(); handleRefresh(log); }}
                                                 >
                                                     <img src={refreshIcon} alt="Refresh" />
                                                 </button>
