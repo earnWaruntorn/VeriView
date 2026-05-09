@@ -90,7 +90,7 @@ const ResultPage = () => {
       .map(mapReview);
 
     return normaliseData({
-      image: productInfo.image ?? demoProductData.image,
+      image: productInfo.image_url ?? demoProductData.image,
       name: productInfo.product_name,
       store: productInfo.store,
       price: productInfo.price,
