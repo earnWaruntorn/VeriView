@@ -1,26 +1,11 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/1-Navbar";
 import ProductCard from "../components/2-ProductCard";
 import DonutChart from "../components/2-DonutChart";
+import { postProduct, getProduct, getReviews } from "../services/api";
 import { demoRealReviews, demoFakeReviews, demoProductData } from "../data/mockReviews";
 import "../styles/result.css";
-
-// Expected backend response shape (POST /api/analyze):
-// {
-//   image:         string,
-//   name:          string,
-//   store:         string,
-//   price:         number,
-//   realReviews:   Array<{ text: string, sentiment: "positive"|"neutral"|"negative" }>,
-//   fakeReviews:   Array<{ text: string, sentiment: "positive"|"neutral"|"negative" }>,
-// }
-//
-// The frontend will COMPUTE these values from the arrays:
-//   totalReviews  = realReviews.length + fakeReviews.length
-//   realPercent   = Math.round(realReviews.length / totalReviews * 100)
-//   fakePercent   = 100 - realPercent
 
 /**
  * Take raw data (from backend or demo) and compute derived fields
@@ -48,6 +33,28 @@ const normaliseData = (raw) => {
   };
 };
 
+/**
+ * Derive sentiment from the star rating.
+ * 4-5 stars → positive, 3 stars → neutral, 1-2 stars → negative.
+ */
+const ratingToSentiment = (rating) => {
+  if (rating >= 4) return "positive";
+  if (rating === 3) return "neutral";
+  return "negative";
+};
+
+/**
+ * Map a backend review object to the shape the UI components expect.
+ * Backend: { review, rating, predicted_label, confidence_score, ... }
+ * Frontend: { text, sentiment, rating, confidence_score }
+ */
+const mapReview = (r) => ({
+  text: r.review ?? "",
+  sentiment: ratingToSentiment(r.rating),
+  rating: r.rating,
+  confidence_score: r.confidence_score,
+});
+
 const ResultPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -62,21 +69,33 @@ const ResultPage = () => {
       });
     }
 
-    // const res = await fetch(`http://localhost:8000/api/analyze`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ url: productUrl }),
-    // });
-    // if (!res.ok) throw new Error("Failed to analyze product");
-    // const data = await res.json();
-    // return normaliseData(data);
+    // 1. Register the product URL and get its product_id
+    const { product_id } = await postProduct(productUrl);
 
-    // ── Simulated delay with demo data (remove when backend is ready) ──
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    // 2. Fetch product details (name, store, price, image, etc.)
+    const productInfo = await getProduct(product_id);
+
+    // 3. Fetch reviews with predictions
+    const reviewRes = await getReviews(product_id);
+    const allReviews = (reviewRes.data ?? []).filter(
+      (r) => r.review && r.review.trim() !== ""
+    );
+
+    // 4. Split reviews into real vs fake based on predicted_label
+    const realReviews = allReviews
+      .filter((r) => r.predicted_label === "real")
+      .map(mapReview);
+    const fakeReviews = allReviews
+      .filter((r) => r.predicted_label === "fake")
+      .map(mapReview);
+
     return normaliseData({
-      ...demoProductData,
-      realReviews: demoRealReviews,
-      fakeReviews: demoFakeReviews,
+      image: productInfo.image ?? demoProductData.image,
+      name: productInfo.product_name,
+      store: productInfo.store,
+      price: productInfo.price,
+      realReviews,
+      fakeReviews,
     });
   };
 
@@ -107,7 +126,7 @@ const ResultPage = () => {
         <section className="result-page">
           <div className="result-status">
             <h2>Oops!</h2>
-            <p>{error}</p>
+            <p>{error.message}</p>
             <button className="retry-btn" onClick={() => navigate("/")}>
               Try Again
             </button>

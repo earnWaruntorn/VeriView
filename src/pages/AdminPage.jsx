@@ -1,20 +1,22 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAdminLogs, reAnalyze, getReviews } from "../services/api";
 import refreshIcon from "../assets/refresh-icon.svg";
-import MOCK_LOGS from "../data/mockLogs";
 import "../styles/admin.css";
 
 function formatLocalTime(utcString) {
     if (!utcString || utcString === "-") return "-";
-    const d = new Date(utcString);
+    // Ensure the string is treated as UTC if it doesn't have a timezone identifier
+    const timeStr = utcString.endsWith("Z") ? utcString : `${utcString}Z`;
+    const d = new Date(timeStr);
     if (isNaN(d.getTime())) return utcString;
-    
+
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
     const hours = String(d.getHours()).padStart(2, "0");
     const minutes = String(d.getMinutes()).padStart(2, "0");
-    
+
     return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
@@ -34,12 +36,63 @@ function getBadgeClass(status) {
 }
 
 function capitalize(str) {
+    if (!str) return "-";
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function truncateProductName(name, maxLen = 35) {
+    if (!name) return "Unknown Product";
+    if (name.length <= maxLen) return name;
+    return name.slice(0, maxLen) + "...";
+}
+
 function truncateUrl(url, maxLen = 28) {
+    if (!url) return "";
     if (url.length <= maxLen) return url;
     return url.slice(0, maxLen) + "...";
+}
+
+/**
+ * Derive sentiment from the star rating.
+ * 4-5 stars → positive, 3 stars → neutral, 1-2 stars → negative.
+ */
+const ratingToSentiment = (rating) => {
+    if (rating >= 4) return "positive";
+    if (rating === 3) return "neutral";
+    return "negative";
+};
+
+/**
+ * Map a backend product to the shape the admin UI expects.
+ * Backend fields: product_id, product_name, product_code, store, price,
+ *                 status, created_at, last_scraped_products, last_predicted,
+ *                 last_scraped_reviews
+ */
+function mapProductToLog(p) {
+    const productUrl = `https://www.lazada.co.th/products/${p.product_code}.html`;
+
+    // Derive scrape/analyze statuses from timestamps
+    let scrapeStatus = "pending";
+    if (p.status === "error") scrapeStatus = "error";
+    else if (p.last_scraped_products || p.last_scraped_reviews) scrapeStatus = "scraped";
+
+    let analyzeStatus = "pending";
+    if (p.status === "error") analyzeStatus = "error";
+    else if (p.last_predicted) analyzeStatus = "analyzed";
+
+    return {
+        id: p.product_id,
+        productName: truncateProductName(p.product_name),
+        productUrl,
+        submittedAt: p.created_at,
+        scrapeTime: p.last_scraped_products || p.last_scraped_reviews || "-",
+        scrapeStatus,
+        analyzeTime: p.last_predicted || "-",
+        analyzeStatus,
+        realReviewPercent: null, // Will be computed when viewing details
+        realReviews: [],
+        fakeReviews: [],
+    };
 }
 
 /**
@@ -62,17 +115,46 @@ const AdminPage = () => {
     const [logs, setLogs] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState(null);
+    const [sortBy, setSortBy] = useState("submittedAt");
 
-    // Fetch logs from backend; fall back to mock data when API is unreachable
+    const token = sessionStorage.getItem("adminToken");
+
+    // Fetch logs from backend
     const fetchLogs = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/admin/logs");
-            if (!res.ok) throw new Error("API error");
-            const data = await res.json();
-            setLogs(data);   // real data replaces mock entirely
-        } catch {
-            // Backend not available – use mock data as fallback
-            setLogs(MOCK_LOGS);
+            const data = await getAdminLogs(token);
+            const products = data.products || [];
+            const mapped = products.map(mapProductToLog);
+
+            // For completed products, fetch reviews to compute real/fake ratio
+            const enriched = await Promise.all(
+                mapped.map(async (log) => {
+                    if (log.analyzeStatus !== "analyzed") return log;
+
+                    try {
+                        const reviewRes = await getReviews(log.id);
+                        const allReviews = (reviewRes.data ?? []).filter(
+                            (r) => r.review && r.review.trim() !== ""
+                        );
+                        const realCount = allReviews.filter(
+                            (r) => r.predicted_label === "real"
+                        ).length;
+                        const total = allReviews.length;
+                        const realPercent = total > 0
+                            ? Math.round((realCount / total) * 100)
+                            : null;
+
+                        return { ...log, realReviewPercent: realPercent };
+                    } catch {
+                        return log;
+                    }
+                })
+            );
+
+            setLogs(enriched);
+        } catch (err) {
+            console.error("Failed to fetch admin logs:", err);
+            setLogs([]);
         }
     };
 
@@ -85,7 +167,7 @@ const AdminPage = () => {
         }
     }, [navigate]);
 
-    // Filter logs by search query AND status filter
+    // Filter and sort logs
     const filteredLogs = useMemo(() => {
         let result = logs;
 
@@ -114,8 +196,16 @@ const AdminPage = () => {
             );
         }
 
+        // Sort (most recent first)
+        result = [...result].sort((a, b) => {
+            const key = sortBy === "analyzeTime" ? "analyzeTime" : "submittedAt";
+            const timeA = a[key] && a[key] !== "-" ? new Date(a[key]).getTime() : 0;
+            const timeB = b[key] && b[key] !== "-" ? new Date(b[key]).getTime() : 0;
+            return timeB - timeA;
+        });
+
         return result;
-    }, [logs, searchQuery, statusFilter]);
+    }, [logs, searchQuery, statusFilter, sortBy]);
 
     // Summary counts
     const summary = useMemo(() => {
@@ -147,7 +237,6 @@ const AdminPage = () => {
                         ...l,
                         scrapeStatus: "pending",
                         analyzeStatus: "pending",
-                        overallStatus: "pending",
                         realReviewPercent: null,
                         scrapeTime: new Date().toISOString(),
                         analyzeTime: "-",
@@ -157,45 +246,71 @@ const AdminPage = () => {
         );
 
         try {
-            // Try backend refresh endpoint
-            await fetch(`http://localhost:8000/api/admin/refresh/${id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: log.productUrl }),
-            });
+            await reAnalyze(id, token);
             // Re-fetch updated logs from backend
             await fetchLogs();
-        } catch {
-            // Backend not available – keep the optimistic local update
-            console.log(`Re-scraping and re-analyzing log #${id} for URL: ${log.productUrl} (mock)`);
+        } catch (err) {
+            console.error(`Failed to re-analyze product #${id}:`, err);
+            // Re-fetch to restore actual state
+            await fetchLogs();
         }
     };
 
-    const handleViewLog = (log) => {
+    const handleViewLog = async (log) => {
         // Only allow navigation for fully analyzed logs
         const isComplete =
             log.scrapeStatus === "scraped" && log.analyzeStatus === "analyzed";
         if (!isComplete) return;
 
-        const totalReviews = (log.realReviews?.length || 0) + (log.fakeReviews?.length || 0);
-        const realPercent = log.realReviewPercent ?? 0;
-        const fakePercent = 100 - realPercent;
+        try {
+            // Fetch real reviews from backend
+            const reviewRes = await getReviews(log.id);
+            const allReviews = (reviewRes.data ?? []).filter(
+                (r) => r.review && r.review.trim() !== ""
+            );
 
-        navigate("/admin/log-result", {
-            state: {
-                productName: log.productName,
-                productUrl: log.productUrl,
-                totalReviews,
-                realPercent,
-                fakePercent,
-                realReviews: log.realReviews || [],
-                fakeReviews: log.fakeReviews || [],
-            },
-        });
+            const realReviews = allReviews
+                .filter((r) => r.predicted_label === "real")
+                .map((r) => ({
+                    text: r.review ?? "",
+                    sentiment: ratingToSentiment(r.rating),
+                    rating: r.rating,
+                    confidence_score: r.confidence_score,
+                }));
+            const fakeReviews = allReviews
+                .filter((r) => r.predicted_label === "fake")
+                .map((r) => ({
+                    text: r.review ?? "",
+                    sentiment: ratingToSentiment(r.rating),
+                    rating: r.rating,
+                    confidence_score: r.confidence_score,
+                }));
+
+            const totalReviews = realReviews.length + fakeReviews.length;
+            const realPercent = totalReviews > 0
+                ? Math.round((realReviews.length / totalReviews) * 100)
+                : 0;
+            const fakePercent = totalReviews > 0 ? 100 - realPercent : 0;
+
+            navigate("/admin/log-result", {
+                state: {
+                    productName: log.productName,
+                    productUrl: log.productUrl,
+                    totalReviews,
+                    realPercent,
+                    fakePercent,
+                    realReviews,
+                    fakeReviews,
+                },
+            });
+        } catch (err) {
+            console.error("Failed to fetch reviews for log:", err);
+        }
     };
 
     const handleLogout = () => {
         sessionStorage.removeItem("isAdminLoggedIn");
+        sessionStorage.removeItem("adminToken");
         navigate("/admin/login");
     };
 
@@ -242,7 +357,7 @@ const AdminPage = () => {
                     </div>
                 </div>
 
-                {/* Search bar */}
+                {/* Search bar + sort */}
                 <div className="admin-search">
                     <input
                         type="text"
@@ -250,6 +365,14 @@ const AdminPage = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
+                    <select
+                        className="sort-select"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                    >
+                        <option value="submittedAt">Sort by: Submitted At</option>
+                        <option value="analyzeTime">Sort by: Last Analyzed</option>
+                    </select>
                 </div>
 
                 {/* Scrollable table */}

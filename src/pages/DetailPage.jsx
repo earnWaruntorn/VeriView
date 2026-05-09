@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/1-Navbar";
-import { demoRealReviews, demoFakeReviews } from "../data/mockReviews";
+
 import backBtnSvg from "../assets/back-btn.svg";
 import prevArrowSvg from "../assets/prev-arrow.svg";
 import nextArrowSvg from "../assets/next-arrow.svg";
@@ -59,8 +59,8 @@ const DetailPage = () => {
     const [hoveredSentiment, setHoveredSentiment] = useState(null);
 
     const rawReviews = showReal
-        ? (stateRealReviews && stateRealReviews.length > 0 ? stateRealReviews : demoRealReviews)
-        : (stateFakeReviews && stateFakeReviews.length > 0 ? stateFakeReviews : demoFakeReviews);
+        ? (stateRealReviews || [])
+        : (stateFakeReviews || []);
 
     const reviews = rawReviews.filter(r => !selectedSentiment || r.sentiment === selectedSentiment);
 

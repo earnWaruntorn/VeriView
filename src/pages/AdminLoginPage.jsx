@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { login } from "../services/api";
 import "../styles/admin.css";
 
 const AdminLoginPage = () => {
@@ -15,13 +16,18 @@ const AdminLoginPage = () => {
         }
     }, [navigate]);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (username === "admin" && password === "admin") {
+        setError("");
+
+        try {
+            const data = await login(username, password);
+            // Store the JWT token and login flag
             sessionStorage.setItem("isAdminLoggedIn", "true");
+            sessionStorage.setItem("adminToken", data.access_token);
             navigate("/admin");
-        } else {
-            setError("Invalid username or password");
+        } catch (err) {
+            setError(err.message || "Invalid username or password");
         }
     };
 

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { demoRealReviews, demoFakeReviews } from "../data/mockReviews";
+
 import prevArrowSvg from "../assets/prev-arrow.svg";
 import nextArrowSvg from "../assets/next-arrow.svg";
 import "../styles/logresult.css";
@@ -74,13 +74,9 @@ const LogResultPage = () => {
         setSelectedSentiment(null);
     };
 
-    // Resolve review arrays (use state data if available, fallback to mock)
-    const realReviews = stateRealReviews && stateRealReviews.length > 0
-        ? stateRealReviews
-        : demoRealReviews;
-    const fakeReviews = stateFakeReviews && stateFakeReviews.length > 0
-        ? stateFakeReviews
-        : demoFakeReviews;
+    // Resolve review arrays (use state data if available, fallback to empty array)
+    const realReviews = stateRealReviews || [];
+    const fakeReviews = stateFakeReviews || [];
 
     // Build the displayed reviews based on viewMode
     const rawReviews = useMemo(() => {
