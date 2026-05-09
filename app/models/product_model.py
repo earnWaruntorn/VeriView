@@ -10,6 +10,16 @@ class ProductModel:
         self.last_scraped_products = product[7]
         self.last_predicted = product[8]
         self.last_scraped_reviews = product[9]
+        self.image_url = product[10]
+
+    @staticmethod
+    def _serialize_dt(val):
+        """Convert datetime to ISO string for JSON serialization."""
+        if val is None:
+            return None
+        if hasattr(val, "isoformat"):
+            return val.isoformat()
+        return str(val)
 
     def to_dict(self):
         return {
@@ -17,9 +27,11 @@ class ProductModel:
             "product_name": self.product_name,
             "product_code": self.product_code,
             "store": self.store,
-            "price": self.price,
+            "price": float(self.price) if self.price is not None else None,
             "status": self.status,
-            "last_scraped_products": self.last_scraped_products,
-            "last_predicted": self.last_predicted,
-            "last_scraped_reviews": self.last_scraped_reviews
-        }
+            "created_at": self._serialize_dt(self.created_at),
+            "last_scraped_products": self._serialize_dt(self.last_scraped_products),
+            "last_predicted": self._serialize_dt(self.last_predicted),
+            "last_scraped_reviews": self._serialize_dt(self.last_scraped_reviews),
+            "image_url": self.image_url
+        }

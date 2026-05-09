@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
+
 # App
 APP_ENV = os.getenv("APP_ENV", "development")
 DEBUG = APP_ENV == "development"
@@ -15,5 +16,5 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD", "postgres"),
 }
 
-#API key
-API_KEY = os.getenv("API_KEY", "API_KEY")
+API_KEY_PRODUCT = os.getenv("API_KEY_PRODUCT", "default_product_key")
+API_KEY_REVIEW = os.getenv("API_KEY_REVIEW", "default_review_key")
